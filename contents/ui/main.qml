@@ -14,6 +14,14 @@ PlasmoidItem {
     property var monitorsAvailable: []
     property bool isLoadingMonitors: false
     
+    // Brightness properties
+    property int maxBrightness: 100
+    property int currentBrightness: 50
+    property bool isLoadingBrightness: false
+    
+    // ComboBox selection index
+    property int selectedMonitorIndex: 0
+    
     // Timer for timeout
     Timer {
         id: loadTimeout
@@ -23,6 +31,18 @@ PlasmoidItem {
         onTriggered: {
             console.log("Timeout detecting monitors")
             isLoadingMonitors = false
+        }
+    }
+    
+    // Timer for brightness detection timeout
+    Timer {
+        id: brightnessTimeout
+        interval: 5000
+        running: false
+        repeat: false
+        onTriggered: {
+            console.log("Timeout detecting brightness")
+            isLoadingBrightness = false
         }
     }
     
@@ -37,6 +57,27 @@ PlasmoidItem {
         
         onNewData: function(sourceName, data) {
             console.log("Command executed:", sourceName)
+            
+            // Check if it's a brightness detection command
+            if (sourceName.indexOf("getvcp 10") !== -1) {
+                brightnessTimeout.stop()
+                if (data.stdout) {
+                    parseBrightness(data.stdout)
+                } else {
+                    console.log("Error getting brightness:", data.stderr)
+                    isLoadingBrightness = false
+                }
+                disconnectSource(sourceName)
+                return
+            }
+            
+            // Check if it's a set brightness command
+            if (sourceName.indexOf("setvcp 10") !== -1) {
+                disconnectSource(sourceName)
+                return
+            }
+            
+            // Monitor detection
             loadTimeout.stop()
             
             if (data.stdout) {
@@ -58,6 +99,29 @@ PlasmoidItem {
         var cmd = "ddcutil setvcp 10 " + valInt + " --bus=" + root.monitorBus + " --noverify"
         console.log("Executing:", cmd)
         executableSource.connectSource(cmd)
+    }
+    
+    function getBrightness() {
+        if (isLoadingBrightness || monitorBus === "") return
+        console.log("Getting brightness for bus:", monitorBus)
+        isLoadingBrightness = true
+        brightnessTimeout.start()
+        var cmd = "ddcutil getvcp 10 --bus=" + monitorBus
+        executableSource.connectSource(cmd)
+    }
+    
+    function parseBrightness(output) {
+        console.log("Parsing brightness output:", output)
+        // Example output: "VCP code 0x10 (Brightness): current value = 50, max value = 100"
+        var match = output.match(/current value\s*=\s*(\d+).*max value\s*=\s*(\d+)/)
+        if (match) {
+            maxBrightness = parseInt(match[2])
+            currentBrightness = parseInt(match[1])
+            console.log("Brightness - Current:", currentBrightness, "Max:", maxBrightness)
+        } else {
+            console.log("Could not parse brightness values")
+        }
+        isLoadingBrightness = false
     }
     
     function detectMonitors() {
@@ -145,6 +209,9 @@ PlasmoidItem {
             
             // Sincroniza o ComboBox
             updateComboBoxSelection()
+            
+            // Get brightness values for selected monitor
+            getBrightness()
         } else {
             console.log("No monitor with DDC/CI support found")
         }
@@ -155,11 +222,11 @@ PlasmoidItem {
     
     function updateComboBoxSelection() {
         console.log("Updating ComboBox selection...")
-        if (monitorSelector && monitorsAvailable.length > 0) {
+        if (monitorsAvailable.length > 0) {
             for (var k = 0; k < monitorsAvailable.length; k++) {
                 if (monitorsAvailable[k].bus === monitorBus && 
                     monitorsAvailable[k].name === monitorName) {
-                    monitorSelector.currentIndex = k
+                    selectedMonitorIndex = k
                     console.log("ComboBox updated to index:", k)
                     return
                 }
@@ -213,14 +280,18 @@ PlasmoidItem {
                         ["Loading..."] : 
                         root.monitorsAvailable.map(m => m.name + " (Bus " + m.bus + ")")
                     enabled: !root.isLoadingMonitors && root.monitorsAvailable.length > 0
+                    currentIndex: root.selectedMonitorIndex
                     
-                    onCurrentIndexChanged: {
-                        if (!root.isLoadingMonitors && currentIndex >= 0 && 
-                            root.monitorsAvailable.length > currentIndex) {
-                            root.monitorBus = root.monitorsAvailable[currentIndex].bus
-                            root.monitorName = root.monitorsAvailable[currentIndex].name
+                    onActivated: function(index) {
+                        if (!root.isLoadingMonitors && index >= 0 && 
+                            root.monitorsAvailable.length > index) {
+                            root.selectedMonitorIndex = index
+                            root.monitorBus = root.monitorsAvailable[index].bus
+                            root.monitorName = root.monitorsAvailable[index].name
                             plasmoid.configuration.lastMonitorBus = root.monitorBus
                             plasmoid.configuration.lastMonitorName = root.monitorName
+                            // Get brightness for newly selected monitor
+                            root.getBrightness()
                         }
                     }
                 }
@@ -257,9 +328,10 @@ PlasmoidItem {
                     id: slider
                     Layout.fillWidth: true
                     from: 0
-                    to: 50
-                    stepSize: 5
-                    value: 25
+                    to: root.maxBrightness
+                    stepSize: root.maxBrightness >= 100 ? 5 : 1
+                    value: root.currentBrightness
+                    enabled: !root.isLoadingBrightness
                     
                     onPressedChanged: {
                         if (!pressed) root.setBrightness(value)
@@ -267,7 +339,7 @@ PlasmoidItem {
                 }
                 
                 PlasmaComponents.Label { 
-                    text: Math.round((slider.value / 50) * 100) + "%"
+                    text: Math.round((slider.value / root.maxBrightness) * 100) + "%"
                     Layout.minimumWidth: 40
                     Layout.alignment: Qt.AlignVCenter
                     font.bold: true
@@ -276,7 +348,7 @@ PlasmoidItem {
             
             // Additional information
             PlasmaComponents.Label {
-                text: "DDC/CI Value: " + Math.round(slider.value) + "/50"
+                text: "DDC/CI Value: " + Math.round(slider.value) + "/" + root.maxBrightness
                 font.pixelSize: 10
                 opacity: 0.6
                 Layout.fillWidth: true
