@@ -2,6 +2,8 @@
 
 A KDE Plasma widget that controls the brightness of monitors via the DDC-CI protocol.
 
+<img width="605" height="221" alt="image" src="https://github.com/user-attachments/assets/49cc67ab-7beb-4d30-9a43-51024b46e2d4" />
+
 ## Requirements
 
 - KDE Plasma 6.0+
