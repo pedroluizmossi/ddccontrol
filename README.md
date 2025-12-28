@@ -1,14 +1,14 @@
 # DDC Brightness Control - Plasmoid
 
-Um widget KDE Plasma que controla o brilho dos monitores via protocolo DDC-CI.
+A KDE Plasma widget that controls the brightness of monitors via the DDC-CI protocol.
 
-## Requisitos
+## Requirements
 
 - KDE Plasma 6.0+
-- `ddcutil` instalado no sistema
-- Permissões adequadas para acessar os dispositivos I2C
+- `ddcutil` installed on the system
+- Proper permissions to access I2C devices
 
-### Passo 1: Instalar dependências do sistema
+### Step 1: Install system dependencies
 
 **Fedora/RHEL:**
 ```bash
@@ -25,133 +25,132 @@ sudo apt install ddcutil
 sudo pacman -S ddcutil
 ```
 
-### Passo 2: Configurar permissões (opcional, mas recomendado)
+### Step 2: Configure permissions (optional, but recommended)
 
-Se receber erro de permissão ao usar ddcutil:
+If you receive a permission error when using ddcutil:
 ```bash
-# Adicione seu usuário ao grupo i2c
+# Add your user to the i2c group
 sudo usermod -a -G i2c $USER
 
-# Faça logout e login novamente
+# Log out and log back in
 ```
 
-Ou alternativamente, use `sudo` ao executar ddcutil:
+Or alternatively, use `sudo` when running ddcutil:
 ```bash
 ddcutil detect --sudo
 ```
 
-### Passo 3: Clonar o repositório
+### Step 3: Clone the repository
 
 ```bash
-# Clone para uma pasta temporária
-git clone https://github.com/seu-usuario/com.pedroluizmossi.ddccontrol.git
+# Clone to a temporary folder
+git clone https://github.com/your-user/com.pedroluizmossi.ddccontrol.git
 cd com.pedroluizmossi.ddccontrol
 ```
 
-### Passo 4: Instalar o Plasmoid
+### Step 4: Install the Plasmoid
 
 ```bash
-# Crie o diretório se não existir
+# Create the directory if it doesn't exist
 mkdir -p ~/.local/share/plasma/plasmoids
 
-# Copie o plasmoid para a pasta correta
+# Copy the plasmoid to the correct folder
 cp -r . ~/.local/share/plasma/plasmoids/com.pedroluizmossi.ddccontrol/
 ```
 
-### Passo 5: Reiniciar o Plasma Shell
+### Step 5: Restart Plasma Shell
 
 ```bash
-# Reinicie o Plasma Shell para carregar o novo widget
+# Restart Plasma Shell to load the new widget
 kquitapp plasmashell && kstart5 plasmashell &
 ```
 
-### Passo 6: Adicionar o widget ao painel
+### Step 6: Add the widget to the panel
 
-1. Clique com botão direito no painel do Plasma
-2. Selecione "Editar painel"
-3. Procure por "DDC Brightness"
-4. Adicione à sua barra de tarefas
+1. Right-click on the Plasma panel
+2. Select "Edit Panel"
+3. Search for "DDC Brightness"
+4. Add to your taskbar
 
-### Verificação
+### Verification
 
-Após instalar, você pode verificar se tudo está funcionando:
+After installation, you can verify that everything is working:
 
 ```bash
-# Teste se ddcutil está funcionando
+# Test if ddcutil is working
 ddcutil detect
 
-# Você deve ver uma lista de monitores conectados com suporte DDC-CI
+# You should see a list of connected monitors with DDC-CI support
 ```
 
-## Uso
+## Usage
 
-1. Adicione o widget ao seu painel do Plasma
-2. O widget detectará automaticamente os monitores conectados que suportam DDC-CI
-3. Use o dropdown para selecionar qual monitor controlar
-4. Use o slider para ajustar o brilho
-5. Clique no botão de atualização (🔄) para redetectar monitores
+1. Add the widget to your Plasma panel
+2. The widget will automatically detect connected monitors that support DDC-CI
+3. Use the dropdown to select which monitor to control
+4. Use the slider to adjust brightness
+5. Click the refresh button (🔄) to re-detect monitors
 
-## Estrutura do Projeto
+## Project Structure
 
 ```
 com.pedroluizmossi.ddccontrol/
-├── metadata.json          # Metadados do Plasmoid
+├── metadata.json          # Plasmoid metadata
 ├── contents/
 │   ├── config/
-│   │   └── config.ui      # Interface de configuração
+│   │   └── config.ui      # Configuration interface
 │   └── ui/
-│       └── main.qml       # Interface principal (QML)
-├── README.md              # Este arquivo
-└── .gitignore             # Arquivos a ignorar no git
+│       └── main.qml       # Main interface (QML)
+├── README.md              # This file
+└── .gitignore             # Files to ignore in git
 ```
 
-## Funcionalidades
+## Features
 
-- ✅ Detectar automaticamente monitores com suporte DDC-CI
-- ✅ Selecionar qual monitor controlar
-- ✅ Ajustar brilho via slider
-- ✅ Memorizar última seleção de monitor
-- ✅ Redetectar monitores com botão de atualização
-- ✅ Timeout de detecção (6 segundos)
+- ✅ Automatically detect monitors with DDC-CI support
+- ✅ Select which monitor to control
+- ✅ Adjust brightness via slider
+- ✅ Remember last monitor selection
+- ✅ Re-detect monitors with refresh button
 
-## Resolução de problemas
+## Troubleshooting
 
-**Erro: "ddcutil not found"**
-- Verifique se ddcutil foi instalado corretamente
-- Rode `which ddcutil` para confirmar o caminho
+**Error: "ddcutil not found"**
+- Verify that ddcutil was installed correctly
+- Run `which ddcutil` to confirm the path
 
-**Widget não detecta monitores**
-- Teste `ddcutil detect` no terminal
-- Verifique se tem permissões suficientes
-- Adicione seu usuário ao grupo i2c: `sudo usermod -a -G i2c $USER` (requer logout/login)
-- Verifique se o monitor suporta DDC-CI
+**Widget does not detect monitors**
+- Test `ddcutil detect` in the terminal
+- Check if you have sufficient permissions
+- Add your user to the i2c group: `sudo usermod -a -G i2c $USER` (requires logout/login)
+- Verify that your monitor supports DDC-CI
 
-**Widget carregando infinitamente**
-- Teste `ddcutil detect` no terminal
-- Verifique se tem permissões suficientes
+**Widget loading infinitely**
+- Test `ddcutil detect` in the terminal
+- Check if you have sufficient permissions
 
-**Slider não controla o brilho**
-- Teste manualmente: `ddcutil setvcp 10 50 --bus=XX` (substitua XX pelo número do bus)
+**Slider does not control brightness**
+- Test manually: `ddcutil setvcp 10 50 --bus=XX` (replace XX with your bus number)
 
-**Nenhum monitor detectado**
-- Nem todos os monitores suportam DDC-CI
-- Conecte o monitor diretamente (não via USB-C ou docks)
-- Verifique se o monitor está ligado
+**No monitors detected**
+- Not all monitors support DDC-CI
+- Connect the monitor directly (not via USB-C or docks)
+- Verify that the monitor is powered on
 
-## Desinstalação
+## Uninstallation
 
-Se precisar remover o widget:
+If you need to remove the widget:
 
 ```bash
 rm -rf ~/.local/share/plasma/plasmoids/com.pedroluizmossi.ddccontrol
-# Reinicie o Plasma Shell
+# Restart Plasma Shell
 kquitapp plasmashell && kstart5 plasmashell &
 ```
 
-## Autor
+## Author
 
 Pedro Luiz Mossi
 
-## Licença
+## License
 
 MIT

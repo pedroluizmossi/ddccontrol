@@ -1,4 +1,4 @@
-# Arquivos do sistema
+# System files
 .DS_Store
 .AppleDouble
 .LSOverride
@@ -7,14 +7,14 @@ Thumbs.db
 *.swo
 *~
 
-# IDEs e editores
+# IDEs and editors
 .vscode/
 .idea/
 *.code-workspace
 *.sublime-workspace
 .netbeans/
 
-# Compilações e builds
+# Build artifacts
 build/
 dist/
 *.o
@@ -30,7 +30,7 @@ __pycache__/
 *.log
 crash.log
 
-# Arquivos temporários
+# Temporary files
 .tmp/
 temp/
 *.tmp

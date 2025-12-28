@@ -8,42 +8,42 @@ import org.kde.plasma.core as PlasmaCore
 PlasmoidItem {
     id: root
     
-    // Monitor selecionado
+    // Selected monitor
     property string monitorBus: ""
     property string monitorName: ""
     property var monitorsAvailable: []
     property bool isLoadingMonitors: false
     
-    // Timer para timeout
+    // Timer for timeout
     Timer {
         id: loadTimeout
         interval: 6000
         running: false
         repeat: false
         onTriggered: {
-            console.log("Timeout na detecção de monitores")
+            console.log("Timeout detecting monitors")
             isLoadingMonitors = false
         }
     }
     
-    // Largura/altura preferida para modo compacto
+    // Preferred width/height for compact mode
     preferredRepresentation: compactRepresentation
 
-    // Motor para execução de comandos shell
+    // Engine for executing shell commands
     Plasma5Support.DataSource {
         id: executableSource
         engine: "executable"
         connectedSources: []
         
         onNewData: function(sourceName, data) {
-            console.log("Comando executado:", sourceName)
+            console.log("Command executed:", sourceName)
             loadTimeout.stop()
             
             if (data.stdout) {
-                console.log("Detectando monitores...")
+                console.log("Detecting monitors...")
                 parseMonitors(data.stdout)
             } else if (data.stderr) {
-                console.log("Erro ddcutil:", data.stderr)
+                console.log("ddcutil error:", data.stderr)
                 isLoadingMonitors = false
             } else {
                 isLoadingMonitors = false
@@ -56,13 +56,13 @@ PlasmoidItem {
     function setBrightness(value) {
         var valInt = Math.round(value)
         var cmd = "ddcutil setvcp 10 " + valInt + " --bus=" + root.monitorBus + " --noverify"
-        console.log("Executando:", cmd)
+        console.log("Executing:", cmd)
         executableSource.connectSource(cmd)
     }
     
     function detectMonitors() {
         if (isLoadingMonitors) return
-        console.log("Iniciando detecção de monitores...")
+        console.log("Starting monitor detection...")
         isLoadingMonitors = true
         loadTimeout.start()
         executableSource.connectSource("ddcutil detect")
@@ -74,7 +74,7 @@ PlasmoidItem {
         var currentBus = ""
         var currentModel = ""
         
-        console.log("Parsing monitores...")
+        console.log("Parsing monitors...")
         
         for (var i = 0; i < lines.length; i++) {
             var line = lines[i]
@@ -112,41 +112,41 @@ PlasmoidItem {
             })
         }
         
-        console.log("Monitores encontrados:", JSON.stringify(monitors))
+        console.log("Monitors found:", JSON.stringify(monitors))
         
         if (monitors.length > 0) {
             monitorsAvailable = monitors
             
-            // Restaura a seleção anterior
+            // Restore previous selection
             var savedBus = plasmoid.configuration.lastMonitorBus
             var savedName = plasmoid.configuration.lastMonitorName
             var found = false
             
-            console.log("Buscando monitor salvo - Bus:", savedBus, "Nome:", savedName)
+            console.log("Looking for saved monitor - Bus:", savedBus, "Name:", savedName)
             
             for (var j = 0; j < monitors.length; j++) {
                 if (monitors[j].bus === savedBus && monitors[j].name === savedName) {
                     monitorBus = savedBus
                     monitorName = savedName
                     found = true
-                    console.log("Monitor salvo encontrado!")
+                    console.log("Saved monitor found!")
                     break
                 }
             }
             
-            // Se não encontrou, usa o primeiro
+            // If not found, use the first
             if (!found) {
                 monitorBus = monitors[0].bus
                 monitorName = monitors[0].name
                 plasmoid.configuration.lastMonitorBus = monitorBus
                 plasmoid.configuration.lastMonitorName = monitorName
-                console.log("Usando primeiro monitor:", monitorBus, monitorName)
+                console.log("Using first monitor:", monitorBus, monitorName)
             }
             
             // Sincroniza o ComboBox
             updateComboBoxSelection()
         } else {
-            console.log("Nenhum monitor com suporte DDC/CI encontrado")
+            console.log("No monitor with DDC/CI support found")
         }
         
         isLoadingMonitors = false
@@ -154,13 +154,13 @@ PlasmoidItem {
     }
     
     function updateComboBoxSelection() {
-        console.log("Atualizando seleção do ComboBox...")
+        console.log("Updating ComboBox selection...")
         if (monitorSelector && monitorsAvailable.length > 0) {
             for (var k = 0; k < monitorsAvailable.length; k++) {
                 if (monitorsAvailable[k].bus === monitorBus && 
                     monitorsAvailable[k].name === monitorName) {
                     monitorSelector.currentIndex = k
-                    console.log("ComboBox atualizado para index:", k)
+                    console.log("ComboBox updated to index:", k)
                     return
                 }
             }
@@ -168,11 +168,11 @@ PlasmoidItem {
     }
     
     Component.onCompleted: {
-        console.log("Widget iniciado")
+        console.log("Widget started")
         detectMonitors()
     }
 
-    // Representação compacta: ícone na barra de tarefas
+    // Compact representation: system tray icon
     compactRepresentation: Item {
         PlasmaComponents.Label {
             anchors.centerIn: parent
@@ -186,7 +186,7 @@ PlasmoidItem {
         }
     }
 
-    // Representação completa: Seletor de monitor + Slider
+    // Full representation: Monitor selector + Slider
     fullRepresentation: Item {
         width: 350
         height: 180
@@ -196,7 +196,7 @@ PlasmoidItem {
             anchors.margins: 12
             spacing: 10
             
-            // Seletor de monitor
+            // Monitor selector
             RowLayout {
                 spacing: 10
                 Layout.fillWidth: true
@@ -210,7 +210,7 @@ PlasmoidItem {
                     id: monitorSelector
                     Layout.fillWidth: true
                     model: root.isLoadingMonitors ? 
-                        ["Carregando..."] : 
+                        ["Loading..."] : 
                         root.monitorsAvailable.map(m => m.name + " (Bus " + m.bus + ")")
                     enabled: !root.isLoadingMonitors && root.monitorsAvailable.length > 0
                     
@@ -233,16 +233,16 @@ PlasmoidItem {
                 }
             }
             
-            // Informações do monitor selecionado
+            // Selected monitor information
             PlasmaComponents.Label {
-                text: "Controle de Brilho"
+                text: "Brightness Control"
                 font.bold: true
                 font.pixelSize: 12
                 Layout.fillWidth: true
                 opacity: 0.8
             }
             
-            // Slider de brilho
+            // Brightness slider
             RowLayout {
                 spacing: 10
                 Layout.fillWidth: true
@@ -274,7 +274,7 @@ PlasmoidItem {
                 }
             }
             
-            // Informações adicionais
+            // Additional information
             PlasmaComponents.Label {
                 text: "DDC/CI Value: " + Math.round(slider.value) + "/50"
                 font.pixelSize: 10

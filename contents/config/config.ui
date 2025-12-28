@@ -14,7 +14,7 @@
             <item>
                 <widget class="QLabel" name="label">
                     <property name="text">
-                        <string>Configurações do DDC Control</string>
+                        <string>DDC Control Settings</string>
                     </property>
                 </widget>
             </item>
